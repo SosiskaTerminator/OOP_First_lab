@@ -1,10 +1,19 @@
 package people;
 
-public class Person {
-    protected short age;
-    protected String phoneNumber;
+import java.util.regex.Pattern;
+import MyException.InvalidAgeException;
+import MyException.InvalidNameException;
+import MyException.InvalidPhoneNumberException;
 
-    protected boolean isValidPhoneNumber(String number) {
+public abstract class Person {
+    private short age;
+    private String phoneNumber;
+    private String name;
+    private String surname;
+
+    private static final int MAX_NAME_LENGTH = 100;
+
+    private boolean isValidPhoneNumber(String number) {
         if (number == null || number.isEmpty()) {
             return false;
         }
@@ -16,7 +25,70 @@ public class Person {
                 && digitsOnly.length() <= 15;
     }
 
-    protected boolean isValidAge(short age) {
+    private boolean isValidAge(short age) {
         return 0 <= age && age <= 200;
+    }
+
+    private String validateNameSurname(String value) {
+        if (value == null) return "значение не задано (null)";
+        if (value.isEmpty()) return "значение пустое";
+        if (value.length() > MAX_NAME_LENGTH)
+            return "длина превышает " + MAX_NAME_LENGTH + " символов";
+
+        Pattern NAME_PATTERN = Pattern.compile("^[\\p{L}]+(?:[-'’][\\p{L}]+)*$");
+
+        if (!NAME_PATTERN.matcher(value).matches())
+            return "содержит недопустимые символы";
+        return null;
+    }
+
+    public void setAge(short age) throws InvalidAgeException {
+        if (!isValidAge(age)) {
+            throw new InvalidAgeException();
+        }
+
+        this.age = age;
+    }
+
+    public void setPhoneNumber(String phoneNumber) throws InvalidPhoneNumberException {
+        if (!isValidPhoneNumber(phoneNumber)) {
+            throw new InvalidPhoneNumberException();
+        }
+
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void setName(String name) throws InvalidNameException {
+        String error = validateNameSurname(name);
+        if (error != null) {
+            throw new InvalidNameException("Некорректное имя: " + error);
+        }
+
+        this.name = name;
+    }
+
+    public void setSurname(String surname) throws InvalidNameException {
+        String error = validateNameSurname(surname);
+        if (error != null) {
+            throw new InvalidNameException("Некорректное имя: " + error);
+        }
+
+        this.surname = surname;
+    }
+
+    public short getAge() {
+        return age;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getSurname() {
+        return surname;
     }
 }
