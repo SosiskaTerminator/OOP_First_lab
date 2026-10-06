@@ -6,12 +6,13 @@ import MyException.InvalidNameException;
 import MyException.InvalidPhoneNumberException;
 
 public abstract class Person {
-    private short age;
-    private String phoneNumber;
-    private String name;
-    private String surname;
+    protected short age;
+    protected String phoneNumber;
+    protected String name;
+    protected String surname;
 
     private static final int MAX_NAME_LENGTH = 100;
+    private static final Pattern NAME_PATTERN = Pattern.compile("^[\\p{L}]+(?:[-'’][\\p{L}]+)*$");
 
     private boolean isValidPhoneNumber(String number) {
         if (number == null || number.isEmpty()) {
@@ -29,13 +30,11 @@ public abstract class Person {
         return 0 <= age && age <= 200;
     }
 
-    private String validateNameSurname(String value) {
+    private String isValidNameSurname(String value) {
         if (value == null) return "значение не задано (null)";
         if (value.isEmpty()) return "значение пустое";
         if (value.length() > MAX_NAME_LENGTH)
             return "длина превышает " + MAX_NAME_LENGTH + " символов";
-
-        Pattern NAME_PATTERN = Pattern.compile("^[\\p{L}]+(?:[-'’][\\p{L}]+)*$");
 
         if (!NAME_PATTERN.matcher(value).matches())
             return "содержит недопустимые символы";
@@ -59,7 +58,7 @@ public abstract class Person {
     }
 
     public void setName(String name) throws InvalidNameException {
-        String error = validateNameSurname(name);
+        String error = isValidNameSurname(name);
         if (error != null) {
             throw new InvalidNameException("Некорректное имя: " + error);
         }
@@ -68,7 +67,7 @@ public abstract class Person {
     }
 
     public void setSurname(String surname) throws InvalidNameException {
-        String error = validateNameSurname(surname);
+        String error = isValidNameSurname(surname);
         if (error != null) {
             throw new InvalidNameException("Некорректное имя: " + error);
         }
