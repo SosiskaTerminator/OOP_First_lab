@@ -1,18 +1,15 @@
 package delivery_model;
 
-public class FastDelivery implements DeliveryMain{
+public class FastDelivery implements Delivery{
     @Override
-    public String getDeliveryTime() {
-        return "3 дней";
-    }
+    public String getName() { return "Быстрая доставка"; }
 
     @Override
-    public float caclPrice(float orderPrice) {
-        return orderPrice + 467;
-    }
+    public int getDeliveryDays() { return 3; }
 
     @Override
-    public boolean isNeedCourier() {
-        return true;
-    }
+    public float calcPrice() { return 467; }
+
+    @Override
+    public boolean isNeedCourier() { return true; }
 }

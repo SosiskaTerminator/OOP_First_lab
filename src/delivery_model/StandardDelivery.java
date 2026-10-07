@@ -1,18 +1,15 @@
 package delivery_model;
 
-public class StandardDelivery implements DeliveryMain{
+public class StandardDelivery implements Delivery {
     @Override
-    public String getDeliveryTime() {
-        return "7 дней";
-    }
+    public String getName() { return "Стандартная доставка"; }
 
     @Override
-    public float caclPrice(float orderPrice) {
-        return orderPrice + 300;
-    }
+    public int getDeliveryDays() { return 7; }
 
     @Override
-    public boolean isNeedCourier() {
-        return true;
-    }
+    public float calcPrice() { return 300; }
+
+    @Override
+    public boolean isNeedCourier() { return true; }
 }

@@ -1,18 +1,16 @@
 package delivery_model;
 
-public class PickUpDelivery implements DeliveryMain{
-    @Override
-    public String getDeliveryTime() {
-        return "Сегодня";
-    }
+public class PickUpDelivery implements Delivery {
 
     @Override
-    public float caclPrice(float orderPrice) {
-        return orderPrice + 0;
-    }
+    public String getName() { return "Самовывоз"; }
 
     @Override
-    public boolean isNeedCourier() {
-        return false;
-    }
+    public int getDeliveryDays() { return 0; }
+
+    @Override
+    public float calcPrice() { return 0; }
+
+    @Override
+    public boolean isNeedCourier() { return false; }
 }

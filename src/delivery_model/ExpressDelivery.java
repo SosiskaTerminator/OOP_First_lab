@@ -1,18 +1,16 @@
 package delivery_model;
 
-public class ExpressDelivery implements DeliveryMain{
-    @Override
-    public String getDeliveryTime() {
-        return "1 дней";
-    }
+public class ExpressDelivery implements Delivery {
 
     @Override
-    public float caclPrice(float orderPrice) {
-        return orderPrice + 900;
-    }
+    public String getName() { return "Экспресс-доставка"; }
 
     @Override
-    public boolean isNeedCourier() {
-        return true;
-    }
+    public int getDeliveryDays() { return 1; }
+
+    @Override
+    public float calcPrice() { return 900; }
+
+    @Override
+    public boolean isNeedCourier() { return true; }
 }
