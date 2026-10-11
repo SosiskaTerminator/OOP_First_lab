@@ -5,13 +5,21 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import MyException.DatabaseException;
 import MyException.InvalidAgeException;
 import MyException.InvalidNameException;
 import MyException.InvalidPhoneNumberException;
+import delivery_model.Delivery;
+import delivery_model.ExpressDelivery;
+import delivery_model.FastDelivery;
+import delivery_model.StandardDelivery;
 import people.Courier;
 import people.Transport;
 
@@ -26,6 +34,15 @@ public class CourierRepository {
 
     private static final String COLUMNS =
             "courier_id, name, surname, age, phone_number, transport, is_available";
+
+    /**
+     * Каким транспортом можно выполнить каждый способ доставки.
+     * Самовывоза здесь нет: для него курьер не нужен.
+     */
+    private static final Map<Class<? extends Delivery>, Set<Transport>> SUITABLE_TRANSPORT = Map.of(
+            ExpressDelivery.class, EnumSet.of(Transport.MOTORCYCLE, Transport.CAR),
+            FastDelivery.class, EnumSet.of(Transport.MOTORCYCLE, Transport.CAR),
+            StandardDelivery.class, EnumSet.of(Transport.CAR));
 
     private final DatabaseManager databaseManager;
 
@@ -83,6 +100,55 @@ public class CourierRepository {
             return couriers;
         } catch (SQLException e) {
             throw new DatabaseException("Не удалось получить список курьеров", e);
+        }
+    }
+
+    /**
+     * Находит первого свободного курьера, подходящего под способ доставки.
+     *
+     * <p>Подходящим считается доступный курьер, чей транспорт позволяет
+     * выполнить выбранный способ доставки (см. {@link #SUITABLE_TRANSPORT}).
+     * Курьеры перебираются по возрастанию идентификатора, возвращается
+     * первый подошедший. Для способов доставки, не требующих курьера
+     * (например, самовывоза), результат пустой.</p>
+     *
+     * @param delivery выбранный способ доставки
+     * @return идентификатор подходящего курьера, если он есть
+     * @throws IllegalArgumentException если способ доставки не задан
+     */
+    public Optional<Integer> findSuitableCourierId(Delivery delivery) {
+        if (delivery == null) {
+            throw new IllegalArgumentException("Способ доставки не задан");
+        }
+        if (!delivery.isNeedCourier()) {
+            return Optional.empty();
+        }
+
+        Set<Transport> allowed = SUITABLE_TRANSPORT.get(delivery.getClass());
+        List<Transport> transports = allowed == null
+                ? Collections.emptyList() : new ArrayList<>(allowed);
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT courier_id FROM couriers WHERE is_available = 1");
+        if (!transports.isEmpty()) {
+            sql.append(" AND transport IN (")
+                    .append(String.join(", ", Collections.nCopies(transports.size(), "?")))
+                    .append(")");
+        }
+        sql.append(" ORDER BY courier_id LIMIT 1");
+
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < transports.size(); i++) {
+                statement.setString(i + 1, transports.get(i).name());
+            }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next()
+                        ? Optional.of(resultSet.getInt("courier_id"))
+                        : Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Не удалось найти подходящего курьера", e);
         }
     }
 
