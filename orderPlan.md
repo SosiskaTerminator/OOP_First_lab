@@ -13,8 +13,8 @@
 ## Решения (согласованы)
 1. **БД:** SQLite, файл `delivery.db` создаётся автоматически в корне проекта.
    Драйвер: `org.xerial:sqlite-jdbc`.
-2. **Сборка:** Maven (`pom.xml`). В `pom.xml` прописываем
-   `<sourceDirectory>src</sourceDirectory>`, чтобы **не двигать** текущую папку `src`.
+2. **Сборка:** обычный `javac` без сборщика (Maven в системе не установлен).
+   Драйвер лежит в `lib/sqlite-jdbc.jar`, папка `src` не двигается.
 3. **Архитектура:** `Order` — чистая сущность с бизнес-проверками;
    работа с БД — в отдельных repository-классах (DAO). Так требует ТЗ
    о разделении ответственности (не God-Object).
@@ -35,10 +35,11 @@ order_items(id PK AUTOINCREMENT, order_number FK -> orders,
 - При первом запуске repository сам делает `CREATE TABLE IF NOT EXISTS`.
 
 ## Новые файлы
-### `pom.xml` (корень)
-- Maven-проект, Java 17+.
-- Зависимость `org.xerial:sqlite-jdbc`.
-- `<sourceDirectory>src</sourceDirectory>` — существующие файлы остаются на месте.
+### `lib/sqlite-jdbc.jar` + компиляция
+- JDBC-драйвер SQLite лежит в `lib/sqlite-jdbc.jar`.
+- Сборка: `javac -encoding UTF-8 -d out -cp lib/sqlite-jdbc.jar $(find src -name '*.java')`.
+- Запуск: `java -cp "out:lib/sqlite-jdbc.jar" <главный класс>`.
+- `pom.xml` не нужен, текущие файлы не переносятся.
 
 ### `order_model/OrderItem.java`
 Позиция заказа: `productName`, `quantity`, `price`.
@@ -75,6 +76,10 @@ CRUD для клиентов и курьеров (JDBC):
 `insert`, `findById`, `findAll`, `update`, `delete`.
 Нужны, чтобы `orders` мог ссылаться на клиента/курьера по id.
 
+### `order_model/DatabaseManager.java`
+Подключение к SQLite и создание схемы (`CREATE TABLE IF NOT EXISTS`).
+Выдаёт соединения репозиториям, включает `PRAGMA foreign_keys = ON`.
+
 ### `order_model/OrderRepository.java`
 Вся работа с таблицами `orders` и `order_items`:
 - `insert(Order)` — транзакция: вставка заказа + всех позиций;
@@ -89,7 +94,7 @@ CRUD для клиентов и курьеров (JDBC):
 - Позиции/доставку нельзя менять после выхода из CREATED.
 
 ## Порядок реализации
-1. `pom.xml`, проверить, что драйвер SQLite подтянулся, и что `src` компилируется Maven'ом.
+1. Подложить драйвер в `lib/`, проверить компиляцию всего `src` через `javac`.
 2. `OrderItem`, `OrderStatus`, `DeliveryFactory`.
 3. `ClientRepository`, `CourierRepository`.
 4. `Order` (сущность) + `OrderRepository` (БД).
